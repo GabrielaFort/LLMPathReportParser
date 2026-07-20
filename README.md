@@ -30,20 +30,20 @@ You also need Ollama running locally for local models, or an Ollama Cloud API ke
 Print classifier input JSON to the terminal:
 
 ```bash
-python prepare_oncotree_input.py report.pdf -m llama3.1
+python prepare_oncotree_input.py report.pdf -m gemma4:e4b
 ```
 
 Write classifier input JSON to a file:
 
 ```bash
-python prepare_oncotree_input.py report.pdf -m llama3.1 -o input_json/report.json
+python prepare_oncotree_input.py report.pdf -m gemma4:e4b -o input_json/report.json
 ```
 
 TXT and DOCX reports use the same command:
 
 ```bash
-python prepare_oncotree_input.py report.txt -m llama3.1 -o input_json/report.json
-python prepare_oncotree_input.py report.docx -m llama3.1 -o input_json/report.json
+python prepare_oncotree_input.py report.txt -m gemma4:e4b -o input_json/report.json
+python prepare_oncotree_input.py report.docx -m gemma4:e4b -o input_json/report.json
 ```
 
 For Ollama Cloud models, pass the cloud model name and API key. Any model name containing `cloud` is treated as a cloud model:
