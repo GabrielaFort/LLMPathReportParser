@@ -25,6 +25,10 @@ python -m pip install -r requirements.txt
 
 You also need Ollama running locally for local models, or an Ollama Cloud API key for cloud models.
 
+## PHI Warning
+
+Pathology reports may contain protected health information (PHI). Do not upload PHI or other sensitive patient data to cloud LLM models. For PHI-containing reports, use an approved local model or de-identify the reports before processing.
+
 ## Usage
 
 Print classifier input JSON to the terminal:
@@ -47,6 +51,8 @@ python prepare_oncotree_input.py report.docx -m gemma4:e4b -o input_json/report.
 ```
 
 For Ollama Cloud models, pass the cloud model name and API key. Any model name containing `cloud` is treated as a cloud model:
+
+Warning: this sends report content to Ollama Cloud. Do not use cloud models with PHI-containing reports.
 
 ```bash
 python prepare_oncotree_input.py report.pdf \
