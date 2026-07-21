@@ -1,5 +1,6 @@
 import io
 import json
+import re
 import tempfile
 from pathlib import Path
 
@@ -41,6 +42,8 @@ REQUIRED_ONCOTREE_FIELDS = [
     "test_order_id",
     "sample_site",
 ]
+
+IMAGE_ONLY_MARKDOWN_RE = re.compile(r"<!--\s*image\s*-->", re.IGNORECASE)
 
 PATH_REPORT_SCHEMA = {
     "type": "object",
@@ -141,7 +144,15 @@ def validate_path_report_fields(data):
         )
 
 
-def convert_pdf_to_md(pdf_path):
+def is_empty_or_image_only_markdown(markdown):
+    text = markdown.strip()
+    if not text:
+        return True
+
+    return not IMAGE_ONLY_MARKDOWN_RE.sub("", text).strip()
+
+
+def convert_pdf_to_md(pdf_path, force_full_page_ocr=False):
     """
     Convert a PDF pathology report to MD format using docling
     """
@@ -152,8 +163,10 @@ def convert_pdf_to_md(pdf_path):
 
     pipeline_options = PdfPipelineOptions(do_table_structure=True)
     pipeline_options.do_ocr = True
-    pipeline_options.ocr_options = RapidOcrOptions()
-    # pipeline_options.ocr_options = EasyOcrOptions(force_full_page_ocr=True)
+    if force_full_page_ocr:
+        pipeline_options.ocr_options = RapidOcrOptions(force_full_page_ocr=True)
+    else:
+        pipeline_options.ocr_options = RapidOcrOptions()
     # pipeline_options.ocr_options = TesseractOcrOptions()
 
     converter = DocumentConverter(
@@ -166,6 +179,12 @@ def convert_pdf_to_md(pdf_path):
     result = converter.convert(pdf_path)
     doc = result.document
     md = doc.export_to_markdown()
+
+    if (
+        not force_full_page_ocr
+        and is_empty_or_image_only_markdown(md)
+    ):
+        return convert_pdf_to_md(pdf_path, force_full_page_ocr=True)
 
     return md
 
@@ -270,7 +289,7 @@ def report_text_to_oncotree_input(
     return build_oncotree_input_json(
         icd_code_descriptions=parsed_report.get("icd_code_descriptions") or "",
         path_lab_info=parsed_report.get("path_lab_info") or "",
-        test_order_id=parsed_report.get("test_order_id") or Path(filename).stem,
+        test_order_id=Path(filename).stem,
         sample_site=parsed_report.get("sample_site") or "",
     )
 
@@ -321,7 +340,7 @@ def bytes_to_oncotree_input(
 
     if suffix == ".pdf":
         report_text = pdf_text_getter() if pdf_text_getter else convert_pdf_bytes_to_md(file_bytes)
-        if not report_text.strip():
+        if is_empty_or_image_only_markdown(report_text):
             raise ValueError("No readable text extracted from the PDF.")
         return report_text_to_oncotree_input(
             report_text,
