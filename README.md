@@ -93,12 +93,6 @@ export OLLAMA_HOST=http://127.0.0.1:46021
 python prepare_oncotree_input.py report.pdf -m gemma4:e4b -o input_json/report.json
 ```
 
-For local models, host resolution uses this order:
-
-```text
---ollama-host argument -> OLLAMA_HOST environment variable -> http://localhost:11434
-```
-
 For Ollama Cloud models, pass the cloud model name and API key. Any model name containing `cloud` is treated as a cloud model:
 
 Warning: this sends report content to Ollama Cloud. Do not use cloud models with PHI-containing reports.
