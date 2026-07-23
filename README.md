@@ -31,6 +31,26 @@ Pathology reports may contain protected health information (PHI). Do not upload 
 
 ## Usage
 
+```text
+usage: python prepare_oncotree_input.py INPUT -m MODEL [options]
+
+Convert a pathology report into OncoTree classifier input JSON.
+
+positional arguments:
+  INPUT                 Input report file: .pdf, .txt, or .docx.
+
+required arguments:
+  -m, --model MODEL     Ollama model for report parsing.
+
+options:
+  --api-key API_KEY     Ollama Cloud API key.
+  --api-key-file FILE   File containing the Ollama Cloud API key.
+  --ollama-host URL     Local Ollama host URL, e.g. http://127.0.0.1:11434.
+                        Ignored for cloud models.
+  -o, --output FILE     Output JSON file. If omitted, JSON is printed to stdout.
+  -h, --help            Show the command help message and exit.
+```
+
 Print classifier input JSON to the terminal:
 
 ```bash
@@ -48,6 +68,28 @@ TXT and DOCX reports use the same command:
 ```bash
 python prepare_oncotree_input.py report.txt -m gemma4:e4b -o input_json/report.json
 python prepare_oncotree_input.py report.docx -m gemma4:e4b -o input_json/report.json
+```
+
+If local Ollama is running on a non-default host or port, pass it explicitly:
+
+```bash
+python prepare_oncotree_input.py report.pdf \
+  -m gemma4:e4b \
+  --ollama-host http://127.0.0.1:46021 \
+  -o input_json/report.json
+```
+
+You can also set `OLLAMA_HOST` instead of passing `--ollama-host` each time:
+
+```bash
+export OLLAMA_HOST=http://127.0.0.1:46021
+python prepare_oncotree_input.py report.pdf -m gemma4:e4b -o input_json/report.json
+```
+
+For local models, host resolution uses this order:
+
+```text
+--ollama-host argument -> OLLAMA_HOST environment variable -> http://localhost:11434
 ```
 
 For Ollama Cloud models, pass the cloud model name and API key. Any model name containing `cloud` is treated as a cloud model:
