@@ -1,8 +1,8 @@
 # LLM Path Report Parser
 
-Prepare pathology reports for the OncoTree classifier.
+Prepare pathology reports for the [OncoTree classifier](https://github.com/HuntsmanCancerInstitute/OncoTree/tree/master).
 
-This repository converts `.pdf`, `.txt`, and `.docx` pathology reports into the JSON input format expected by the OncoTree classifier. It does not run the classifier.
+This repository converts pathology reports into the JSON input format expected by the OncoTree classifier. It accepts `.pdf`, `.txt`, and `.docx` inputs. A local or cloud-hosted Ollama LLM is utilized to parse the input files.
 
 ## Output Format
 
@@ -19,6 +19,13 @@ Each output file is one JSON record:
 
 ## Install
 
+Clone this repository and enter the project directory:
+```bash
+git clone https://github.com/GabrielaFort/LLMPathReportParser.git
+cd LLMPathReportParser
+```
+
+Install required libraries:
 ```bash
 python -m pip install -r requirements.txt
 ```
