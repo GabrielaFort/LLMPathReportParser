@@ -12,24 +12,22 @@ You are a medical expert that extracts relevant information from pathology repor
 Return only a JSON object that follows the provided schema.
 Do not use markdown fences.
 Do not rename, omit, or add keys.
-Use exactly these JSON keys: test_order_id, sample_site, sample_type, diagnosis, icd_code_descriptions, comments.
+Use exactly these JSON keys: sample_site, sample_type, diagnosis, icd_code_descriptions, comments.
 Use JSON null for unknown values. Do not use the string "null".
 There may be incorrect spelling or grammer due to OCR or text extraction errors. Try your best to correct these errors and extract the relevant information.
 Do NOT hallucinate any information. If the information is not present in the report, return null for that field.
 Please extract the following information from the pathology report:
 
-1) test_order_id (Optional - random ID will be generated if null): Example: 12345. If not clearly specified, just return null - do not make up an ID.
-2) sample_site (Optional): Where the tumor sample was collected. Example: Lung, lower lobe
-3) sample_type (Optional): Primary, Metastasis. Grade and/or stage if available. Example: Primary tumor, Grade 3
-4) diagnosis (Optional): Short description. Example: Squamous cell carcinoma
-5) icd_code_descriptions (Optional): If available, descriptive text associated with ICD code(s). Example: Carcinoma, Squamous cell, NOS
-6) comments (Optional): Long description, often with IHC results. Example: Invasive, poorly differentiated squamous cell carcinoma with cellular and nuclear atypia. p40 positive by IHC.
+1) sample_site (Optional): Where the tumor sample was collected. Example: Lung, lower lobe
+2) sample_type (Optional): Primary, Metastasis. Grade and/or stage if available. Example: Primary tumor, Grade 3
+3) diagnosis (Optional): Short description. Example: Squamous cell carcinoma
+4) icd_code_descriptions (Optional): If available, descriptive text associated with ICD code(s). Example: Carcinoma, Squamous cell, NOS
+5) comments (Optional): Long description, often with IHC results. Example: Invasive, poorly differentiated squamous cell carcinoma with cellular and nuclear atypia. p40 positive by IHC.
 
 The response MUST contain at least one of the following fields: diagnosis, icd_code_descriptions, or comments.
 """
 
 PATH_REPORT_FIELDS = [
-    "test_order_id",
     "sample_site",
     "sample_type",
     "diagnosis",
@@ -52,10 +50,6 @@ PATH_REPORT_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "test_order_id": {
-            "type": ["string", "null"],
-            "description": "Patient/report/test order ID if present. Use null if not found."
-        },
         "sample_site": {
             "type": ["string", "null"],
             "description": "Where the tumor sample was collected, e.g. Liver, lung lower lobe."
@@ -85,9 +79,9 @@ def get_model_source(model):
     return "cloud" if "cloud" in str(model).lower() else "local"
 
 
-def get_ollama_base_url():
+def get_ollama_base_url(ollama_host=None):
     base_url = (
-        os.environ.get("OLLAMA_BASE_URL")
+        ollama_host
         or os.environ.get("OLLAMA_HOST")
         or DEFAULT_OLLAMA_HOST
     ).strip()
@@ -231,7 +225,7 @@ def extract_docx_text(docx_bytes):
     return "\n\n".join(paragraphs)
 
 
-def parse_path_report_text(report_text, model, model_source=None, api_key=None):
+def parse_path_report_text(report_text, model, model_source=None, api_key=None, ollama_host=None):
     """
     Parse a pathology report using a specified ollama LLM and return the extracted information.
     """
@@ -246,7 +240,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None):
             headers={"Authorization": f"Bearer {api_key}"},
         )
     else:
-        client = ollama.Client(host=get_ollama_base_url())
+        client = ollama.Client(host=get_ollama_base_url(ollama_host))
 
     response = client.chat(
         model = model, 
@@ -283,7 +277,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None):
         raise ValueError("The model response must contain at least one of the following fields: diagnosis, icd_code_descriptions, or comments.")
     
     input_record = build_oncotree_input_json(
-        test_order_id=data.get("test_order_id"),
+        test_order_id=None,
         sample_site=data.get("sample_site"),
         icd_code_descriptions=data.get("icd_code_descriptions"),
         path_lab_info="; ".join(diagnosis_parts) if diagnosis_parts else None,
@@ -298,6 +292,7 @@ def report_text_to_oncotree_input(
     parser_model,
     model_source=None,
     api_key=None,
+    ollama_host=None,
 ):
     try:
         parsed = json.loads(report_text)
@@ -307,7 +302,13 @@ def report_text_to_oncotree_input(
     if is_oncotree_input_json(parsed):
         return normalize_oncotree_input_json(parsed, filename)
 
-    parsed_report = parse_path_report_text(report_text, parser_model, model_source, api_key)
+    parsed_report = parse_path_report_text(
+        report_text,
+        parser_model,
+        model_source,
+        api_key,
+        ollama_host,
+    )
 
     return build_oncotree_input_json(
         icd_code_descriptions=parsed_report.get("icd_code_descriptions") or "",
@@ -333,6 +334,7 @@ def bytes_to_oncotree_input(
     model_source=None,
     api_key=None,
     pdf_text_getter=None,
+    ollama_host=None,
 ):
     suffix = Path(filename).suffix.lower()
 
@@ -347,6 +349,7 @@ def bytes_to_oncotree_input(
             parser_model,
             model_source,
             api_key,
+            ollama_host,
         )
 
     if suffix == ".docx":
@@ -359,6 +362,7 @@ def bytes_to_oncotree_input(
             parser_model,
             model_source,
             api_key,
+            ollama_host,
         )
 
     if suffix == ".pdf":
@@ -371,12 +375,13 @@ def bytes_to_oncotree_input(
             parser_model,
             model_source,
             api_key,
+            ollama_host,
         )
 
     raise ValueError("Supported input types are .pdf, .txt, .docx, and classifier-ready .json.")
 
 
-def file_path_to_oncotree_input(path, parser_model, model_source=None, api_key=None):
+def file_path_to_oncotree_input(path, parser_model, model_source=None, api_key=None, ollama_host=None):
     path = Path(path)
     return bytes_to_oncotree_input(
         path.name,
@@ -384,6 +389,7 @@ def file_path_to_oncotree_input(path, parser_model, model_source=None, api_key=N
         parser_model,
         model_source,
         api_key,
+        ollama_host=ollama_host,
     )
 
 
@@ -393,6 +399,7 @@ def uploaded_file_to_oncotree_input(
     model_source=None,
     api_key=None,
     pdf_text_getter=None,
+    ollama_host=None,
 ):
     cached_pdf_text_getter = None
     if pdf_text_getter:
@@ -405,4 +412,5 @@ def uploaded_file_to_oncotree_input(
         model_source,
         api_key,
         pdf_text_getter=cached_pdf_text_getter,
+        ollama_host=ollama_host,
     )
