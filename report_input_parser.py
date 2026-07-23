@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import re
 import tempfile
 from pathlib import Path
@@ -44,6 +45,8 @@ REQUIRED_ONCOTREE_FIELDS = [
 ]
 
 IMAGE_ONLY_MARKDOWN_RE = re.compile(r"<!--\s*image\s*-->", re.IGNORECASE)
+INVALID_JSON_ESCAPE_RE = re.compile(r'\\(?!["\\/bfnrtu])')
+DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 
 PATH_REPORT_SCHEMA = {
     "type": "object",
@@ -82,6 +85,19 @@ def get_model_source(model):
     return "cloud" if "cloud" in str(model).lower() else "local"
 
 
+def get_ollama_base_url():
+    base_url = (
+        os.environ.get("OLLAMA_BASE_URL")
+        or os.environ.get("OLLAMA_HOST")
+        or DEFAULT_OLLAMA_HOST
+    ).strip()
+    if not base_url:
+        base_url = DEFAULT_OLLAMA_HOST
+    if not base_url.startswith(("http://", "https://")):
+        base_url = f"http://{base_url}"
+    return base_url
+
+
 def build_oncotree_input_json(
     icd_code_descriptions="",
     path_lab_info="",
@@ -117,14 +133,21 @@ def normalize_oncotree_input_json(parsed, filename):
 
 
 def parse_json_object(content):
+    def loads_json_object(text):
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            cleaned = INVALID_JSON_ESCAPE_RE.sub("", text)
+            return json.loads(cleaned)
+
     try:
-        return json.loads(content)
+        return loads_json_object(content)
     except json.JSONDecodeError:
         start = content.find("{")
         end = content.rfind("}")
         if start == -1 or end == -1 or end <= start:
             raise
-        return json.loads(content[start:end + 1])
+        return loads_json_object(content[start:end + 1])
 
 
 def validate_path_report_fields(data):
@@ -223,7 +246,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None):
             headers={"Authorization": f"Bearer {api_key}"},
         )
     else:
-        client = ollama.Client()
+        client = ollama.Client(host=get_ollama_base_url())
 
     response = client.chat(
         model = model, 
