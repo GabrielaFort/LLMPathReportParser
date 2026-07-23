@@ -14,6 +14,10 @@ def parse_args():
     parser.add_argument("--api-key", help="Ollama Cloud API key.")
     parser.add_argument("--api-key-file", help="File containing the Ollama Cloud API key.")
     parser.add_argument(
+        "--ollama-host",
+        help="Local Ollama host URL, e.g. http://127.0.0.1:11434. Ignored for cloud models.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         help="Output JSON file. If omitted, JSON is printed to stdout.",
@@ -45,6 +49,7 @@ def main():
         args.model,
         model_source,
         api_key,
+        ollama_host=args.ollama_host,
     )
     output_json = json.dumps(input_record, indent=2)
 
