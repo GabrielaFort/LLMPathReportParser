@@ -52,7 +52,7 @@ required arguments:
 options:
   --api-key API_KEY     Ollama Cloud API key.
   --api-key-file FILE   File containing the Ollama Cloud API key.
-  --ollama-host URL     Local Ollama host URL, e.g. http://127.0.0.1:11434.
+  --ollama-host URL     Optional local Ollama host URL, e.g. http://127.0.0.1:11434.
                         Ignored for cloud models.
   -o, --output FILE     Output JSON file. If omitted, JSON is printed to stdout.
   -h, --help            Show the command help message and exit.
@@ -77,7 +77,7 @@ python prepare_oncotree_input.py report.txt -m gemma4:e4b -o input_json/report.j
 python prepare_oncotree_input.py report.docx -m gemma4:e4b -o input_json/report.json
 ```
 
-If local Ollama is running on a non-default host or port, pass it explicitly:
+By default, the parser uses Ollama's default local host. If Ollama is running on a non-default host or port, pass it explicitly:
 
 ```bash
 python prepare_oncotree_input.py report.pdf \
