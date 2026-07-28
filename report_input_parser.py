@@ -14,15 +14,14 @@ Do not use markdown fences.
 Do not rename, omit, or add keys.
 Use exactly these JSON keys: sample_site, sample_type, diagnosis, icd_code_descriptions, comments.
 Use JSON null for unknown values. Do not use the string "null".
-There may be incorrect spelling or grammer due to OCR or text extraction errors. Try your best to correct these errors and extract the relevant information.
+There may be incorrect spelling or grammer due to OCR or text extraction errors. Ignore these errors but still extract the relevant information without including too many typos in your output.
 Do NOT hallucinate any information. If the information is not present in the report, return null for that field.
 Please extract the following information from the pathology report:
-
 1) sample_site (Optional): Where the tumor sample was collected. Example: Lung, lower lobe
 2) sample_type (Optional): Primary, Metastasis. Grade and/or stage if available. Example: Primary tumor, Grade 3
 3) diagnosis (Optional): Short description. Example: Squamous cell carcinoma
 4) icd_code_descriptions (Optional): If available, descriptive text associated with ICD code(s). Example: Carcinoma, Squamous cell, NOS
-5) comments (Optional): Long description, often with IHC results. Example: Invasive, poorly differentiated squamous cell carcinoma with cellular and nuclear atypia. p40 positive by IHC.
+5) comments (Optional): Additional description, often with IHC results. Example: Invasive, poorly differentiated squamous cell carcinoma with cellular and nuclear atypia. p40 positive by IHC. Keep comments concise. Do not repeat text. Limit comments to the key pathology findings needed for tumor classification.
 
 The response MUST contain at least one of the following fields: diagnosis, icd_code_descriptions, or comments.
 """
@@ -249,7 +248,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None, 
             {"role": "user", "content": report_text}
         ],
         format = PATH_REPORT_SCHEMA,
-        options={'temperature': 0.0},
+        #options={'temperature': 0.0}, # Try not setting temp and using default settings
     )
     content = response['message']['content']
     # print("Path report parser raw model response:")
