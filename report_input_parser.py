@@ -273,7 +273,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None, 
         or data.get("icd_code_descriptions")
         or data.get("comments")
     ):
-        raise ValueError("The model response must contain at least one of the following fields: diagnosis, icd_code_descriptions, or comments.")
+        raise ValueError("The model response must contain at least one of the following fields: diagnosis, icd_code_descriptions, or comments. Please ensure the input file contains relevant information about a cancer diagnosis.")
     
     input_record = build_oncotree_input_json(
         test_order_id=None,
