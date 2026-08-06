@@ -50,12 +50,12 @@ required arguments:
   -m, --model MODEL     Ollama model for report parsing.
 
 options:
-  --api-key API_KEY     Ollama Cloud API key.
-  --api-key-file FILE   File containing the Ollama Cloud API key.
-  --ollama-host URL     Optional local Ollama host URL, e.g. http://127.0.0.1:11434.
-                        Ignored for cloud models.
-  -o, --output FILE     Output JSON file. If omitted, JSON is printed to stdout.
-  -h, --help            Show the command help message and exit.
+  --model-source {local,cloud} Where to run the model. Default: local.
+  --api-key API_KEY            Ollama Cloud API key.
+  --api-key-file FILE          File containing the Ollama Cloud API key.
+  --ollama-host URL            Optional local Ollama host URL, e.g. http://127.0.0.1:11434. Ignored for cloud models.
+  -o, --output FILE            Output JSON file. If omitted, JSON is printed to stdout.
+  -h, --help                   Show the command help message and exit.
 ```
 
 Print classifier input JSON to the terminal:
@@ -93,17 +93,19 @@ export OLLAMA_HOST=http://127.0.0.1:46021
 python prepare_oncotree_input.py report.pdf -m gemma4:e4b -o input_json/report.json
 ```
 
-For Ollama Cloud models, pass the cloud model name and API key. Any model name containing `cloud` is treated as a cloud model:
+For Ollama Cloud models, explicitly set `--model-source cloud` and pass an API key:
 
 Warning: this sends report content to Ollama Cloud. Do not use cloud models with PHI-containing reports.
 
 ```bash
 python prepare_oncotree_input.py report.pdf \
   -m gemma4:31b-cloud \
+  --model-source cloud \
   --api-key-file key.txt \
   -o input_json/report.json
 ```
 
+Local is the default model source. 
 ## Files
 
 - `report_input_parser.py`: shared parser logic for PDF/TXT/DOCX to classifier input JSON

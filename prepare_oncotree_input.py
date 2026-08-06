@@ -2,7 +2,7 @@ import argparse
 import json
 from pathlib import Path
 
-from report_input_parser import file_path_to_oncotree_input, get_model_source
+from report_input_parser import file_path_to_oncotree_input, normalize_model_source
 
 
 def parse_args():
@@ -11,6 +11,12 @@ def parse_args():
     )
     parser.add_argument("input", help="Input report file: .pdf, .txt, or .docx.")
     parser.add_argument("-m", "--model", required=True, help="Ollama model for report parsing.")
+    parser.add_argument(
+        "--model-source",
+        choices=["local", "cloud"],
+        default="local",
+        help="Where to run the model. Default: local.",
+    )
     parser.add_argument("--api-key", help="Ollama Cloud API key.")
     parser.add_argument("--api-key-file", help="File containing the Ollama Cloud API key.")
     parser.add_argument(
@@ -39,7 +45,7 @@ def main():
     args = parse_args()
     input_path = Path(args.input)
     api_key = get_api_key(args)
-    model_source = get_model_source(args.model)
+    model_source = normalize_model_source(args.model_source)
 
     if model_source == "cloud" and not api_key:
         raise SystemExit("Cloud models require --api-key or --api-key-file.")

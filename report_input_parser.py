@@ -44,6 +44,7 @@ REQUIRED_ONCOTREE_FIELDS = [
 IMAGE_ONLY_MARKDOWN_RE = re.compile(r"<!--\s*image\s*-->", re.IGNORECASE)
 INVALID_JSON_ESCAPE_RE = re.compile(r'\\(?!["\\/bfnrtu])')
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
+MODEL_SOURCES = {"local", "cloud"}
 
 PATH_REPORT_SCHEMA = {
     "type": "object",
@@ -74,8 +75,11 @@ PATH_REPORT_SCHEMA = {
 }
 
 
-def get_model_source(model):
-    return "cloud" if "cloud" in str(model).lower() else "local"
+def normalize_model_source(model_source=None):
+    model_source = (model_source or "local").strip().lower()
+    if model_source not in MODEL_SOURCES:
+        raise ValueError("model_source must be 'local' or 'cloud'.")
+    return model_source
 
 
 def get_ollama_base_url(ollama_host=None):
@@ -228,7 +232,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None, 
     """
     Parse a pathology report using a specified ollama LLM and return the extracted information.
     """
-    model_source = model_source or get_model_source(model)
+    model_source = normalize_model_source(model_source)
 
     if model_source == "cloud":
         if not api_key:
