@@ -4,6 +4,8 @@ Prepare pathology reports for the [OncoTree classifier](https://github.com/Hunts
 
 This repository converts pathology reports into the JSON input format expected by the OncoTree classifier. It accepts `.pdf`, `.txt`, and `.docx` inputs. A local or cloud-hosted Ollama LLM is utilized to parse the input files.
 
+**Warning: Do not upload any PHI/PII to cloud-hosted AI models or unapproved systems. To run the application using local models, read the instructions below.**
+
 ## Output Format
 
 Each output file is one JSON record:
@@ -54,6 +56,7 @@ options:
   --api-key API_KEY            Ollama Cloud API key.
   --api-key-file FILE          File containing the Ollama Cloud API key.
   --ollama-host URL            Optional local Ollama host URL, e.g. http://127.0.0.1:11434. Ignored for cloud models.
+  --pdf-page-limit N           Only process the first N pages of PDF inputs. Default: process all pages.
   -o, --output FILE            Output JSON file. If omitted, JSON is printed to stdout.
   -h, --help                   Show the command help message and exit.
 ```
@@ -69,6 +72,17 @@ Write classifier input JSON to a file:
 ```bash
 python prepare_oncotree_input.py report.pdf -m gemma4:e4b -o input_json/report.json
 ```
+
+Only process the first N pages of a PDF:
+
+```bash
+python prepare_oncotree_input.py report.pdf \
+  -m gemma4:e4b \
+  --pdf-page-limit 5 \
+  -o input_json/report.json
+```
+
+If `--pdf-page-limit` is omitted, the full PDF is processed. Setting a page limit for long reports where the majority of diagnosis information is within the first few pages can reduce processing time.
 
 TXT and DOCX reports use the same command:
 
@@ -99,7 +113,7 @@ Warning: this sends report content to Ollama Cloud. Do not use cloud models with
 
 ```bash
 python prepare_oncotree_input.py report.pdf \
-  -m gemma4:31b-cloud \
+  -m glm-5.2:cloud \
   --model-source cloud \
   --api-key-file key.txt \
   -o input_json/report.json

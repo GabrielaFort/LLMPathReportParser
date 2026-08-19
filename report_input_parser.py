@@ -171,6 +171,26 @@ def is_empty_or_image_only_markdown(markdown):
 
     return not IMAGE_ONLY_MARKDOWN_RE.sub("", text).strip()
 
+def first_pdf_pages_file(pdf_path, page_limit, temp_dir):
+    from pypdf import PdfReader, PdfWriter
+
+    if page_limit < 1:
+        raise ValueError("PDF page limit must be at least 1.")
+
+    reader = PdfReader(str(pdf_path))
+    writer = PdfWriter()
+
+    for index, page in enumerate(reader.pages):
+        if index >= page_limit:
+            break
+        writer.add_page(page)
+
+    limited_path = Path(temp_dir) / f"first_{page_limit}_pages.pdf"
+    with limited_path.open("wb") as f:
+        writer.write(f)
+
+    return limited_path
+
 
 def convert_pdf_to_md(pdf_path, force_full_page_ocr=False):
     """
@@ -209,10 +229,14 @@ def convert_pdf_to_md(pdf_path, force_full_page_ocr=False):
     return md
 
 
-def convert_pdf_bytes_to_md(pdf_bytes):
+def convert_pdf_bytes_to_md(pdf_bytes, page_limit = None):
     with tempfile.TemporaryDirectory() as temp_dir:
         pdf_path = Path(temp_dir) / "report.pdf"
         pdf_path.write_bytes(pdf_bytes)
+
+        if page_limit is not None:
+            pdf_path = first_pdf_pages_file(pdf_path, page_limit, temp_dir)
+            
         return convert_pdf_to_md(pdf_path)
 
 
@@ -232,6 +256,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None, 
     """
     Parse a pathology report using a specified ollama LLM and return the extracted information.
     """
+    print(f"Report text model input: {report_text}")
     model_source = normalize_model_source(model_source)
 
     if model_source == "cloud":
@@ -338,6 +363,7 @@ def bytes_to_oncotree_input(
     api_key=None,
     pdf_text_getter=None,
     ollama_host=None,
+    pdf_page_limit=None,
 ):
     suffix = Path(filename).suffix.lower()
 
@@ -369,7 +395,11 @@ def bytes_to_oncotree_input(
         )
 
     if suffix == ".pdf":
-        report_text = pdf_text_getter() if pdf_text_getter else convert_pdf_bytes_to_md(file_bytes)
+        report_text = (
+            pdf_text_getter()
+            if pdf_text_getter
+            else convert_pdf_bytes_to_md(file_bytes, page_limit=pdf_page_limit)
+        )
         if is_empty_or_image_only_markdown(report_text):
             raise ValueError("No readable text extracted from the PDF.")
         return report_text_to_oncotree_input(
@@ -384,7 +414,14 @@ def bytes_to_oncotree_input(
     raise ValueError("Supported input types are .pdf, .txt, .docx, and classifier-ready .json.")
 
 
-def file_path_to_oncotree_input(path, parser_model, model_source=None, api_key=None, ollama_host=None):
+def file_path_to_oncotree_input(
+    path,
+    parser_model,
+    model_source=None,
+    api_key=None,
+    ollama_host=None,
+    pdf_page_limit=None,
+):
     path = Path(path)
     return bytes_to_oncotree_input(
         path.name,
@@ -393,6 +430,7 @@ def file_path_to_oncotree_input(path, parser_model, model_source=None, api_key=N
         model_source,
         api_key,
         ollama_host=ollama_host,
+        pdf_page_limit=pdf_page_limit,
     )
 
 
@@ -403,6 +441,7 @@ def uploaded_file_to_oncotree_input(
     api_key=None,
     pdf_text_getter=None,
     ollama_host=None,
+    pdf_page_limit=None,
 ):
     cached_pdf_text_getter = None
     if pdf_text_getter:
@@ -416,4 +455,5 @@ def uploaded_file_to_oncotree_input(
         api_key,
         pdf_text_getter=cached_pdf_text_getter,
         ollama_host=ollama_host,
+        pdf_page_limit=pdf_page_limit,
     )

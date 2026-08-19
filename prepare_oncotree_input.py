@@ -24,6 +24,12 @@ def parse_args():
         help="Local Ollama host URL, e.g. http://127.0.0.1:11434. Ignored for cloud models.",
     )
     parser.add_argument(
+        "--pdf-page-limit",
+        type = int,
+        default = None,
+        help = "Only process the first N pages of PDF inputs. Default: process all pages.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         help="Output JSON file. If omitted, JSON is printed to stdout.",
@@ -56,6 +62,7 @@ def main():
         model_source,
         api_key,
         ollama_host=args.ollama_host,
+        pdf_page_limit=args.pdf_page_limit,
     )
     output_json = json.dumps(input_record, indent=2)
 
