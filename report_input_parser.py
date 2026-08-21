@@ -8,22 +8,23 @@ from pathlib import Path
 import ollama
 
 PATH_REPORT_PROMPT = """
-You are a medical expert that extracts relevant information from pathology reports.
-Return only a JSON object that follows the provided schema.
+You are a medical expert that extracts relevant cancer diagnosis information from pathology reports, clinical notes, or molecular testing reports.
+Return only a JSON object that follows the provided schema, with double-quoted object keys.
 Do not use markdown fences.
 Do not rename, omit, or add keys.
 Use exactly these JSON keys: sample_site, sample_type, diagnosis, icd_code_descriptions, comments.
 Use JSON null for unknown values. Do not use the string "null".
 There may be incorrect spelling or grammer due to OCR or text extraction errors. Ignore these errors but still extract the relevant information without including too many typos in your output.
 Do NOT hallucinate any information. If the information is not present in the report, return null for that field.
-Please extract the following information from the pathology report:
+Focus only on information related to the cancer/tumor.
+Please extract the following information from the text:
 1) sample_site (Optional): Where the tumor sample was collected. Example: Lung, lower lobe
 2) sample_type (Optional): Primary, Metastasis. Grade and/or stage if available. Example: Primary tumor, Grade 3
 3) diagnosis (Optional): Short description. Example: Squamous cell carcinoma
 4) icd_code_descriptions (Optional): If available, descriptive text associated with ICD code(s). Example: Carcinoma, Squamous cell, NOS
 5) comments (Optional): Additional description, often with IHC results. Example: Invasive, poorly differentiated squamous cell carcinoma with cellular and nuclear atypia. p40 positive by IHC. Keep comments concise. Do not repeat text. Limit comments to the key pathology findings needed for tumor classification.
 
-The response MUST contain at least one of the following fields: diagnosis, icd_code_descriptions, or comments.
+The response **MUST** contain **at least one** of the following fields: diagnosis, icd_code_descriptions, or comments.
 """
 
 PATH_REPORT_FIELDS = [
