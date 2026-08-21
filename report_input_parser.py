@@ -257,7 +257,7 @@ def parse_path_report_text(report_text, model, model_source=None, api_key=None, 
     """
     Parse a pathology report using a specified ollama LLM and return the extracted information.
     """
-    print(f"Report text model input: {report_text}")
+    # print(f"Report text model input: {report_text}")
     model_source = normalize_model_source(model_source)
 
     if model_source == "cloud":
