@@ -1,8 +1,8 @@
 # LLM Path Report Parser
 
-Prepare pathology reports for the [OncoTree classifier](https://github.com/HuntsmanCancerInstitute/OncoTree/tree/master).
+Prepare pathology reports or molecular testing results for the [OncoTree classifier](https://github.com/HuntsmanCancerInstitute/OncoTree/tree/master).
 
-This repository converts pathology reports into the JSON input format expected by the OncoTree classifier. It accepts `.pdf`, `.txt`, and `.docx` inputs. A local or cloud-hosted Ollama LLM is utilized to parse the input files.
+This repository converts pathology reports or test results into the JSON input format expected by the OncoTree classifier. It accepts `.pdf`, `.txt`, and `.docx` inputs. A local or cloud-hosted Ollama LLM is utilized to parse the input files.
 
 **Warning: Do not upload any PHI/PII to cloud-hosted AI models or unapproved systems. To run the application using local models, read the instructions below.**
 
@@ -36,14 +36,14 @@ You also need Ollama running locally for local models, or an Ollama Cloud API ke
 
 ## PHI Warning
 
-Pathology reports may contain protected health information (PHI). Do not upload PHI or other sensitive patient data to cloud LLM models. For PHI-containing reports, use an approved local model or de-identify the reports before processing.
+Pathology/testing reports may contain protected health information (PHI). Do not upload PHI or other sensitive patient data to cloud LLM models. For PHI-containing reports, use an approved local model or de-identify the reports before processing.
 
 ## Usage
 
 ```text
 usage: python prepare_oncotree_input.py INPUT -m MODEL [options]
 
-Convert a pathology report into OncoTree classifier input JSON.
+Convert a report into OncoTree classifier input JSON.
 
 positional arguments:
   INPUT                 Input report file: .pdf, .txt, or .docx.
@@ -120,6 +120,7 @@ python prepare_oncotree_input.py report.pdf \
 ```
 
 Local is the default model source. 
+
 ## Files
 
 - `report_input_parser.py`: shared parser logic for PDF/TXT/DOCX to classifier input JSON
